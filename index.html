@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mi Chatbot IA</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #0f0f0f;
+      color: #f0f0f0;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 720px;
+      height: 90vh;
+      display: flex;
+      flex-direction: column;
+      background: #1a1a1a;
+      border-radius: 16px;
+      overflow: hidden;
+      border: 1px solid #2a2a2a;
+    }
+
+    .header {
+      padding: 18px 24px;
+      background: #111;
+      border-bottom: 1px solid #2a2a2a;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .header-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #22c55e;
+    }
+
+    .header h1 {
+      font-size: 16px;
+      font-weight: 600;
+      color: #f0f0f0;
+    }
+
+    .header p {
+      font-size: 12px;
+      color: #666;
+      margin-top: 2px;
+    }
+
+    .messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .messages::-webkit-scrollbar { width: 4px; }
+    .messages::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+
+    .msg {
+      display: flex;
+      flex-direction: column;
+      max-width: 80%;
+    }
+
+    .msg.user { align-self: flex-end; align-items: flex-end; }
+    .msg.bot  { align-self: flex-start; align-items: flex-start; }
+
+    .msg-bubble {
+      padding: 12px 16px;
+      border-radius: 14px;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .msg.user .msg-bubble {
+      background: #2563eb;
+      color: #fff;
+      border-bottom-right-radius: 4px;
+    }
+
+    .msg.bot .msg-bubble {
+      background: #262626;
+      color: #e5e5e5;
+      border-bottom-left-radius: 4px;
+    }
+
+    .msg-time {
+      font-size: 11px;
+      color: #555;
+      margin-top: 4px;
+      padding: 0 4px;
+    }
+
+    .typing {
+      display: flex;
+      gap: 5px;
+      padding: 14px 16px;
+      background: #262626;
+      border-radius: 14px;
+      border-bottom-left-radius: 4px;
+      width: fit-content;
+    }
+
+    .typing span {
+      width: 7px;
+      height: 7px;
+      background: #555;
+      border-radius: 50%;
+      animation: bounce 1.2s infinite;
+    }
+
+    .typing span:nth-child(2) { animation-delay: 0.2s; }
+    .typing span:nth-child(3) { animation-delay: 0.4s; }
+
+    @keyframes bounce {
+      0%, 60%, 100% { transform: translateY(0); }
+      30% { transform: translateY(-6px); background: #888; }
+    }
+
+    .input-area {
+      padding: 16px 20px;
+      background: #111;
+      border-top: 1px solid #2a2a2a;
+      display: flex;
+      gap: 10px;
+      align-items: flex-end;
+    }
+
+    textarea {
+      flex: 1;
+      background: #1f1f1f;
+      border: 1px solid #2a2a2a;
+      border-radius: 12px;
+      padding: 12px 16px;
+      color: #f0f0f0;
+      font-size: 14px;
+      font-family: inherit;
+      resize: none;
+      outline: none;
+      max-height: 120px;
+      line-height: 1.5;
+      transition: border-color 0.2s;
+    }
+
+    textarea:focus { border-color: #2563eb; }
+    textarea::placeholder { color: #555; }
+
+    button {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      background: #2563eb;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.2s, transform 0.1s;
+      flex-shrink: 0;
+    }
+
+    button:hover { background: #1d4ed8; }
+    button:active { transform: scale(0.95); }
+    button:disabled { background: #333; cursor: not-allowed; }
+
+    button svg { width: 18px; height: 18px; fill: white; }
+
+    .welcome {
+      text-align: center;
+      color: #444;
+      font-size: 14px;
+      margin: auto;
+    }
+
+    .welcome p { margin-top: 8px; font-size: 13px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div class="header-dot"></div>
+          <h1>Asistente IA</h1>
+        </div>
+        <p>Powered by GPT-4o</p>
+      </div>
+    </div>
+
+    <div class="messages" id="messages">
+      <div class="welcome" id="welcome">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="1.5"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg>
+        <p>Escribe un mensaje para comenzar</p>
+      </div>
+    </div>
+
+    <div class="input-area">
+      <textarea
+        id="input"
+        placeholder="Escribe tu mensaje..."
+        rows="1"
+        onkeydown="handleKey(event)"
+        oninput="autoResize(this)"
+      ></textarea>
+      <button id="send-btn" onclick="sendMessage()">
+        <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <script>
+    const history = [];
+
+    function getTime() {
+      return new Date().toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
+    }
+
+    function autoResize(el) {
+      el.style.height = 'auto';
+      el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+    }
+
+    function handleKey(e) {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+      }
+    }
+
+    function addMessage(role, text) {
+      const welcome = document.getElementById('welcome');
+      if (welcome) welcome.remove();
+
+      const container = document.getElementById('messages');
+      const div = document.createElement('div');
+      div.className = `msg ${role}`;
+      div.innerHTML = `
+        <div class="msg-bubble">${text.replace(/\n/g, '<br>')}</div>
+        <span class="msg-time">${getTime()}</span>
+      `;
+      container.appendChild(div);
+      container.scrollTop = container.scrollHeight;
+      return div;
+    }
+
+    function showTyping() {
+      const welcome = document.getElementById('welcome');
+      if (welcome) welcome.remove();
+
+      const container = document.getElementById('messages');
+      const div = document.createElement('div');
+      div.className = 'msg bot';
+      div.id = 'typing';
+      div.innerHTML = `<div class="typing"><span></span><span></span><span></span></div>`;
+      container.appendChild(div);
+      container.scrollTop = container.scrollHeight;
+    }
+
+    function removeTyping() {
+      const t = document.getElementById('typing');
+      if (t) t.remove();
+    }
+
+    async function sendMessage() {
+      const input = document.getElementById('input');
+      const btn = document.getElementById('send-btn');
+      const text = input.value.trim();
+      if (!text) return;
+
+      input.value = '';
+      input.style.height = 'auto';
+      btn.disabled = true;
+
+      addMessage('user', text);
+      history.push({ role: 'user', content: text });
+      showTyping();
+
+      try {
+        const res = await fetch('http://127.0.0.1:8000/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            messages: history,
+            system_prompt: 'Eres un asistente útil y conciso. Responde siempre en español.',
+            model: 'gpt-4o',
+            temperature: 0.7
+          })
+        });
+
+        const data = await res.json();
+        removeTyping();
+
+        if (data.reply) {
+          addMessage('bot', data.reply);
+          history.push({ role: 'assistant', content: data.reply });
+        } else {
+          addMessage('bot', '⚠️ Error: ' + (data.detail || 'Algo salió mal'));
+        }
+      } catch (err) {
+        removeTyping();
+        addMessage('bot', '⚠️ No se pudo conectar con el servidor.');
+      }
+
+      btn.disabled = false;
+      input.focus();
+    }
+  </script>
+</body>
+</html>
